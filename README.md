@@ -1,79 +1,75 @@
 # ATICOM
 
-A small, invite-only messenger for a closed group of friends. It runs in the browser, installs on the phone home screen, and needs nothing but Node.js (22.13+) on the server — no other dependencies. Every installation is independent: its own users, messages, invites and notification keys. The interface is in English and Turkish; the documentation below is in Turkish.
+A small, invite-only messenger for a closed group of friends. It runs in the browser and installs on the phone home screen like an app. The server needs nothing but Node.js (22.13 or newer): no other dependencies.
 
----
+Every installation is independent: its own users, messages, invites and notification keys. It has no connection to anyone else's ATICOM.
 
-Kapalı arkadaş grupları için davetle çalışan mesajlaşma uygulaması. Tarayıcıda çalışır, telefonda ana ekrana uygulama gibi yüklenir. Sunucuda Node.js (22.13 veya üstü) dışında hiçbir şey gerekmez.
+## Features
 
-Her kurulum bağımsızdır: kendi kullanıcıları, mesajları, davetleri ve bildirim anahtarı olur. Başkasının kurduğu ATICOM ile bağlantısı yoktur.
+- Private and group chats; add people to a group, leave a group, rename a group
+- Photos and voice messages
+- Replies (on a phone, swipe a message to the right)
+- Read receipts (✓ / ✓✓), "typing…" and "recording…" indicators
+- Phone notifications while the app is closed (notifications never contain the message text)
+- English and Turkish interface, light and dark theme
+- Account deletion
 
-## Özellikler
-
-- Özel ve grup sohbetleri; gruba kişi ekleme, gruptan çıkma, grup adını değiştirme
-- Fotoğraf ve sesli mesaj
-- Mesaja yanıt verme (telefonda mesajı sağa kaydır)
-- Okundu bilgisi (✓ / ✓✓), "yazıyor…" ve "ses kaydediyor…" göstergesi
-- Uygulama kapalıyken telefon bildirimi (bildirimde mesaj içeriği yer almaz)
-- İngilizce ve Türkçe arayüz, açık ve koyu tema
-- Hesap silme
-
-## Çalıştırma
+## Running
 
 ```sh
 npm start        # http://localhost:3000
 npm test
 ```
 
-## Yönetim komutları
+## Admin commands
 
 ```sh
-node server.js invite                # tek kullanımlık davet linki üretir (7 gün geçerli)
-node server.js reset <kullanıcı>     # geçici şifre üretir, açık oturumları kapatır
-node server.js remove <kullanıcı>    # üyeyi çıkarır; eski mesajları kalır
-node server.js backup <klasör>       # veritabanı ve dosyaları yedekler (sunucu çalışırken de olur)
+node server.js invite                # creates a one-time invite link (valid for 7 days)
+node server.js reset <username>      # creates a temporary password and logs out open sessions
+node server.js remove <username>     # removes a member; their old messages stay
+node server.js backup <folder>       # backs up the database and files (works while the server is running)
 ```
 
-Linklerin doğru adresi göstermesi için sunucuda `BASE_URL=https://alanadin.com` ayarla.
+Set `BASE_URL=https://yourdomain.com` on the server so links show the right address. Admin command output is in Turkish.
 
-## Dil
+## Language
 
-Uygulama İngilizce açılır. Giriş ekranındaki dil düğmesinden veya Profil'den Türkçeye geçilir; seçim o tarayıcıda hatırlanır. Yeni metinler `public/i18n.js` dosyasına her iki dilde eklenir. Yönetici komutlarının çıktısı Türkçedir.
+The app opens in English. Switch to Turkish with the language button on the login screen or in Profile; the choice is remembered in that browser. New interface text goes into `public/i18n.js` in both languages.
 
-## Bildirim ve ses
+## Notifications and sound
 
-Telefon bildirimi yalnızca HTTPS adresinde çalışır. Sunucunun `fcm.googleapis.com` ve `updates.push.services.mozilla.com` adreslerine çıkabilmesi gerekir. Uygulama içi ses için kullanıcının açılıştan sonra ekrana bir kez dokunmuş olması gerekir. Sesli mesaj kaydı da HTTPS ister (`localhost` hariç).
+Phone notifications only work over HTTPS. The server must be able to reach `fcm.googleapis.com` and `updates.push.services.mozilla.com`. The in-app sound plays only after the user has tapped the screen once after opening the app. Voice recording also requires HTTPS (except on `localhost`).
 
-## Veriler
+## Data
 
-Her şey `data/` klasöründe durur: veritabanı, yüklenen fotoğraf ve sesler, bildirim anahtarı. Bu klasör git'e girmez (`.gitignore`); kodu paylaşırken asla bu klasörü paylaşma. Diğer ayarlar: `PORT` (3000), `HOST` (127.0.0.1), `DATA_DIR`.
+Everything lives in the `data/` folder: the database, uploaded photos and voice messages, and the notification key. This folder is excluded from git (`.gitignore`); never share it. Other settings: `PORT` (3000), `HOST` (127.0.0.1), `DATA_DIR`.
 
-## Yayına alma
+## Deployment
 
-Sunucuyu doğrudan internete açma; şifreler ve mesajlar düz HTTP'de açıkta gider. Önüne HTTPS sağlayan bir ters vekil koy. Örnek `Caddyfile`:
+Do not expose the server directly to the internet; passwords and messages would travel in plain HTTP. Put a reverse proxy that provides HTTPS in front of it. Example `Caddyfile`:
 
 ```
-alanadin.com {
+yourdomain.com {
     reverse_proxy 127.0.0.1:3000
 }
 ```
 
-Caddy, `Host` ve `X-Forwarded-Proto` başlıklarını zaten doğru iletir. Başka bir vekil kullanırsan bu iki başlığı da iletmesini sağla; `Host` gelmezse yazma istekleri reddedilir, `X-Forwarded-Proto` gelmezse çerez `Secure` olmaz.
+Caddy already forwards the `Host` and `X-Forwarded-Proto` headers correctly. If you use another proxy, make sure it forwards both: without `Host`, write requests are rejected; without `X-Forwarded-Proto`, the cookie is not marked `Secure`.
 
-## Raspberry Pi'de kurulum (alan adı ve port açma gerekmez)
+## Raspberry Pi setup (no domain or port forwarding needed)
 
-Aşağıda kullanıcı adı `pi`, proje yolu `/home/pi/ATICOM` varsayılır; farklıysa değiştir.
+The steps below assume the user `pi` and the project path `/home/pi/ATICOM`; change them if yours differ.
 
-1. Node 22.13 veya üstünü kur. `node -v` eskiyse:
+1. Install Node 22.13 or newer. If `node -v` shows an older version:
 
    ```sh
    curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
    sudo apt install -y nodejs
    ```
 
-2. Projeyi Pi'ye kopyala (`git clone` ya da aşağıdaki "Güncelleme" komutu).
+2. Copy the project to the Pi (`git clone`, or the command under "Updating").
 
-3. Tailscale ile HTTPS adresi aç. Bu komut adresini (`https://<pi>.<tailnet>.ts.net`) gösterir; arkadaşların için uygulama kurmak gerekmez:
+3. Open an HTTPS address with Tailscale. This prints your address (`https://<pi>.<tailnet>.ts.net`); your friends do not need to install anything:
 
    ```sh
    curl -fsSL https://tailscale.com/install.sh | sh
@@ -81,7 +77,7 @@ Aşağıda kullanıcı adı `pi`, proje yolu `/home/pi/ATICOM` varsayılır; far
    sudo tailscale funnel --bg 3000
    ```
 
-4. `/etc/systemd/system/aticom.service` dosyasını oluştur, `BASE_URL` satırına kendi adresini yaz:
+4. Create `/etc/systemd/system/aticom.service` and put your address on the `BASE_URL` line:
 
    ```ini
    [Unit]
@@ -92,7 +88,7 @@ Aşağıda kullanıcı adı `pi`, proje yolu `/home/pi/ATICOM` varsayılır; far
    [Service]
    User=pi
    WorkingDirectory=/home/pi/ATICOM
-   Environment=BASE_URL=https://PI-ADRESIN.ts.net
+   Environment=BASE_URL=https://YOUR-PI.ts.net
    ExecStart=/usr/bin/node server.js
    Restart=always
    NoNewPrivileges=true
@@ -106,30 +102,30 @@ Aşağıda kullanıcı adı `pi`, proje yolu `/home/pi/ATICOM` varsayılır; far
    sudo systemctl enable --now aticom
    ```
 
-5. Davet linki üret:
+5. Create an invite link:
 
    ```sh
-   cd /home/pi/ATICOM && BASE_URL=https://PI-ADRESIN.ts.net node server.js invite
+   cd /home/pi/ATICOM && BASE_URL=https://YOUR-PI.ts.net node server.js invite
    ```
 
-6. SD kart bozulursa aynı karttaki yedek de gider. USB belleği `/mnt/usb` altına bağla ve `crontab -e` ile günlük yedek ekle. Bu satır bellek takılı değilse yedek almaz, 14 günden eski yedekleri siler:
+6. If the SD card fails, a backup on the same card is lost with it. Mount a USB stick at `/mnt/usb` and add a daily backup with `crontab -e`. This line skips the backup when the stick is not mounted and deletes backups older than 14 days:
 
    ```
    0 4 * * * mountpoint -q /mnt/usb && cd /home/pi/ATICOM && node server.js backup /mnt/usb/aticom && find /mnt/usb/aticom -mindepth 1 -maxdepth 1 -mtime +14 -exec rm -rf {} +
    ```
 
-## Güncelleme
+## Updating
 
-Önce bilgisayarda `npm test` çalıştır. Sonra kodu Pi'ye gönder ve servisi yeniden başlat (`data/` gönderilmez, mesajlar yerinde kalır; veritabanı yapısı gerekiyorsa açılışta kendiliğinden güncellenir):
-
-```sh
-tar --exclude=data --exclude=.git -czf - -C ~/Desktop ATICOM | ssh pi@PI-ADRESI 'tar -xzf -' && ssh -t pi@PI-ADRESI 'sudo systemctl restart aticom'
-```
-
-Büyük güncellemelerden önce yedek almak iyi olur:
+Run `npm test` on your computer first. Then send the code to the Pi and restart the service. `data/` is not sent, so messages stay; if the database layout changed, it is updated automatically on startup.
 
 ```sh
-ssh pi@PI-ADRESI 'cd ~/ATICOM && rm -rf ~/yedek && node server.js backup ~/yedek' && scp -r pi@PI-ADRESI:yedek ~/aticom-yedek
+tar --exclude=data --exclude=.git -czf - -C ~/Desktop ATICOM | ssh pi@PI-ADDRESS 'tar -xzf -' && ssh -t pi@PI-ADDRESS 'sudo systemctl restart aticom'
 ```
 
-Telefonlar yeni sürümü uygulama kapatılıp açılınca alır.
+Taking a backup before larger updates is a good idea:
+
+```sh
+ssh pi@PI-ADDRESS 'cd ~/ATICOM && rm -rf ~/backup && node server.js backup ~/backup' && scp -r pi@PI-ADDRESS:backup ~/aticom-backup
+```
+
+Phones pick up the new version when the app is closed and reopened.
