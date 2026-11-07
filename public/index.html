@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#3a6d94">
+  <title>ATICOM</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/i18n.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <!-- Simgeler: her yerde <use href="#i-..."> ile kullanılır, renk yazı renginden gelir. -->
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M20.5 3.5 3.5 10.6l6.8 2.6 2.6 6.8z"/><path d="m10.3 13.2 10.2-9.7"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-reply" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h9a7 7 0 0 1 7 7"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4 4L19 7"/></symbol>
+    <symbol id="i-checks" viewBox="0 0 24 24"><path d="m2 12.5 4 4L16 7M11 16l.5.5L22 7"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M15.5 4.6a3.5 3.5 0 0 1 0 6.8M17.5 14.3A6 6 0 0 1 21 20"/></symbol>
+  </svg>
+
+  <main id="auth" class="auth" hidden>
+    <div class="brand">
+      <img src="/icon.svg" alt="" width="76" height="76">
+      <h1>ATICOM <small class="beta">(beta)</small></h1>
+    </div>
+    <form id="login-form" class="auth-form">
+      <label><span data-i18n="username"></span> <input name="username" autocomplete="username" autocapitalize="none" required></label>
+      <label><span data-i18n="password"></span> <input name="password" type="password" autocomplete="current-password" required></label>
+      <p class="error" role="alert"></p>
+      <button class="primary" data-i18n="login"></button>
+      <button type="button" class="link" id="show-register" data-i18n="haveInvite"></button>
+    </form>
+    <form id="register-form" class="auth-form" hidden>
+      <h2 data-i18n="createAccount"></h2>
+      <label><span data-i18n="inviteCode"></span> <input name="invite" autocomplete="off" required></label>
+      <label><span data-i18n="yourName"></span> <input name="name" autocomplete="name" maxlength="50" required></label>
+      <label><span data-i18n="username"></span> <input name="username" autocomplete="username" autocapitalize="none" pattern="[a-zA-Z0-9_.]{3,30}" data-i18n-title="usernameHint" required></label>
+      <label><span data-i18n="passwordNew"></span> <input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="200" required></label>
+      <p class="error" role="alert"></p>
+      <button class="primary" data-i18n="createAccount"></button>
+      <button type="button" class="link" id="show-login" data-i18n="haveAccount"></button>
+    </form>
+    <button type="button" class="link lang-toggle" data-i18n="switchLang"></button>
+  </main>
+
+  <div id="app" class="app" hidden>
+    <aside class="sidebar">
+      <header class="bar brand-bar">
+        <h1>ATICOM <small class="beta">(beta)</small></h1>
+        <button id="open-new" class="icon-button" data-i18n-title="newChat" data-i18n-aria="newChat"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></button>
+        <button id="open-profile" class="avatar-button" data-i18n-title="profile" data-i18n-aria="profile"></button>
+      </header>
+      <div id="push-banner" class="banner" hidden>
+        <span data-i18n="pushQuestion"></span>
+        <button id="enable-push" class="primary" data-i18n="pushEnable"></button>
+        <p id="push-error" class="error" role="alert"></p>
+      </div>
+      <ul id="convos" class="convos"></ul>
+      <p id="no-convos" class="empty" data-i18n="noChats" hidden></p>
+    </aside>
+
+    <section id="chat" class="chat">
+      <div id="no-chat" class="empty no-chat">
+        <img src="/icon.svg" alt="" width="64" height="64">
+        <p data-i18n="pickChat"></p>
+      </div>
+      <div id="chat-open" class="chat-open" hidden>
+        <header class="bar">
+          <button id="back" class="icon-button back" data-i18n-aria="backToChats"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+          <span id="chat-avatar"></span>
+          <div class="chat-title">
+            <h2 id="chat-name"></h2>
+            <p id="chat-sub"></p>
+          </div>
+          <button id="open-group" class="icon-button" data-i18n-title="groupInfo" data-i18n-aria="groupInfo" hidden><svg class="icon" aria-hidden="true"><use href="#i-people"/></svg></button>
+        </header>
+        <div id="messages" class="messages" role="log" aria-live="polite" data-i18n-aria="messages" tabindex="0"></div>
+        <p id="send-error" class="error send-error" role="alert"></p>
+        <div id="reply-bar" class="reply-bar" hidden>
+          <div class="reply-text">
+            <strong id="reply-name"></strong>
+            <span id="reply-snippet"></span>
+          </div>
+          <button type="button" id="reply-cancel" class="icon-button" data-i18n-title="cancelReply" data-i18n-aria="cancelReply"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+        </div>
+        <form id="send-form" class="send">
+          <label id="attach" class="icon-button attach" data-i18n-title="sendPhoto">
+            <svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg><span class="sr" data-i18n="sendPhoto"></span>
+            <input id="photo" type="file" accept="image/*" class="sr">
+          </label>
+          <textarea id="text" rows="1" maxlength="4000" data-i18n-placeholder="typeMessage" data-i18n-aria="typeMessage"></textarea>
+          <div id="rec-strip" class="rec-strip" hidden>
+            <button type="button" id="rec-cancel" class="icon-button" data-i18n-title="cancelVoice" data-i18n-aria="cancelVoice"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
+            <span class="rec-dot" aria-hidden="true"></span>
+            <span id="rec-time" role="timer">0:00</span>
+          </div>
+          <button type="button" id="record" class="round" data-i18n-title="recordVoice" data-i18n-aria="recordVoice" hidden><svg class="icon" aria-hidden="true"><use href="#i-mic"/></svg></button>
+          <button id="send" class="round" data-i18n-title="send" data-i18n-aria="send"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg></button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="new-dialog">
+    <form id="new-form" method="dialog" class="dialog-body">
+      <h2 data-i18n="newChat"></h2>
+      <p class="hint" data-i18n="newChatHelp"></p>
+      <ul id="people" class="people"></ul>
+      <p id="no-people" class="empty" data-i18n="noPeople" hidden></p>
+      <label id="title-field" hidden><span data-i18n="groupName"></span> <input name="title" maxlength="50"></label>
+      <p class="error" role="alert"></p>
+      <div class="actions">
+        <button type="button" class="cancel" data-i18n="cancel"></button>
+        <button class="primary" value="ok" data-i18n="start"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="group-dialog">
+    <form id="group-form" method="dialog" class="dialog-body">
+      <h2 data-i18n="groupInfo"></h2>
+      <label><span data-i18n="groupName"></span> <input name="title" maxlength="50" required></label>
+      <h3 data-i18n="members"></h3>
+      <ul id="group-members" class="people"></ul>
+      <h3 data-i18n="addPeople"></h3>
+      <ul id="group-add" class="people"></ul>
+      <p id="no-add" class="hint" data-i18n="noOneToAdd" hidden></p>
+      <p class="error" role="alert"></p>
+      <div class="actions">
+        <button type="button" id="leave-group" class="danger" data-i18n="leaveGroup"></button>
+        <button type="button" class="cancel" data-i18n="cancel"></button>
+        <button class="primary" value="ok" data-i18n="save"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="profile-dialog">
+    <form id="profile-form" method="dialog" class="dialog-body">
+      <h2 data-i18n="profile"></h2>
+      <p id="profile-username" class="hint"></p>
+      <label><span data-i18n="yourName"></span> <input name="name" maxlength="50" required></label>
+      <button type="button" class="lang-toggle" data-i18n="switchLang"></button>
+      <h3 data-i18n="changePassword"></h3>
+      <label><span data-i18n="currentPassword"></span> <input name="currentPassword" type="password" autocomplete="current-password"></label>
+      <label><span data-i18n="newPassword"></span> <input name="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="200"></label>
+      <p class="error" role="alert"></p>
+      <div class="actions">
+        <button type="button" id="logout" data-i18n="logout"></button>
+        <button type="button" class="cancel" data-i18n="cancel"></button>
+        <button class="primary" value="ok" data-i18n="save"></button>
+      </div>
+      <details class="danger-zone">
+        <summary data-i18n="deleteAccount"></summary>
+        <p class="hint" data-i18n="deleteAccountHelp"></p>
+        <label><span data-i18n="password"></span> <input id="delete-password" type="password" autocomplete="current-password"></label>
+        <p id="delete-error" class="error" role="alert"></p>
+        <button type="button" id="delete-account" class="danger" data-i18n="deleteAccountForever"></button>
+      </details>
+    </form>
+  </dialog>
+
+  <dialog id="photo-dialog" class="photo-dialog">
+    <img id="photo-big" alt="">
+  </dialog>
+</body>
+</html>

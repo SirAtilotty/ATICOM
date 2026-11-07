@@ -1,0 +1,9 @@
+{
+  "name": "aticom",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  }
+}
