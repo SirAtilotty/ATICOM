@@ -80,7 +80,7 @@ function showAuth() {
   events = null;
   $('app').hidden = true;
   $('auth').hidden = false;
-  const invite = /^#davet=(.+)$/.exec(location.hash);
+  const invite = /^#(?:invite|davet)=(.+)$/.exec(location.hash); // davet: eski linkler
   if (invite) $('register-form').elements.invite.value = invite[1];
   $('login-form').hidden = Boolean(invite);
   $('register-form').hidden = !invite;

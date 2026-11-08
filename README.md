@@ -30,7 +30,7 @@ node server.js remove <username>     # removes a member; their old messages stay
 node server.js backup <folder>       # backs up the database and files (works while the server is running)
 ```
 
-Set `BASE_URL=https://yourdomain.com` on the server so links show the right address. Admin command output is in Turkish.
+Set `BASE_URL=https://yourdomain.com` on the server so links show the right address.
 
 ## Language
 

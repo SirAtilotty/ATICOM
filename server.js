@@ -109,7 +109,7 @@ class HttpError extends Error {
 function runCommand([cmd, arg]) {
   const findUser = () => {
     const u = db.prepare('SELECT id FROM users WHERE username = ? AND disabled = 0').get(str(arg));
-    if (!u) throw new Error(`Kullanıcı bulunamadı: ${arg}`);
+    if (!u) throw new Error(`User not found: ${arg}`);
     return u;
   };
   const randomPassword = () => crypto.randomBytes(9).toString('base64url');
@@ -117,11 +117,11 @@ function runCommand([cmd, arg]) {
     invite() {
       const code = crypto.randomBytes(16).toString('hex');
       db.prepare('INSERT INTO invites VALUES (?, ?)').run(sha256(code), Date.now() + INVITE_DAYS * 864e5);
-      console.log(`${BASE_URL}/#davet=${code}\n(Tek kullanımlık, ${INVITE_DAYS} gün geçerli.)`);
+      console.log(`${BASE_URL}/#invite=${code}\n(Single use, valid for ${INVITE_DAYS} days.)`);
     },
     remove() {
       disableUser(findUser().id);
-      console.log(`${arg} gruptan çıkarıldı.`);
+      console.log(`${arg} has been removed.`);
     },
     async reset() {
       const { id } = findUser();
@@ -131,18 +131,18 @@ function runCommand([cmd, arg]) {
         db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
         db.prepare('UPDATE users SET pass = ? WHERE id = ?').run(pass, id);
       });
-      console.log(`Yeni geçici şifre: ${password}\n(Kullanıcı girişten sonra Profil'den değiştirmeli.)`);
+      console.log(`New temporary password: ${password}\n(The user should change it in Profile after logging in.)`);
     },
     backup() {
-      if (!arg) throw new Error('Yedek klasörü belirt: node server.js backup <klasör>');
+      if (!arg) throw new Error('Give a backup folder: node server.js backup <folder>');
       const dir = path.join(arg, new Date().toISOString().replace(/[:.]/g, '-'));
       fs.mkdirSync(dir, { recursive: true });
       db.prepare('VACUUM INTO ?').run(path.join(dir, 'aticom.db'));
       fs.cpSync(UPLOADS, path.join(dir, 'uploads'), { recursive: true });
-      console.log(`Yedek alındı: ${dir}`);
+      console.log(`Backup saved: ${dir}`);
     },
   };
-  if (!commands[cmd]) throw new Error('Komutlar: invite | remove <kullanıcı> | reset <kullanıcı> | backup <klasör>');
+  if (!commands[cmd]) throw new Error('Commands: invite | remove <username> | reset <username> | backup <folder>');
   return commands[cmd]();
 }
 
@@ -240,14 +240,14 @@ async function pushOne(endpoint) {
     },
   });
   if (res.status === 404 || res.status === 410) db.prepare('DELETE FROM push_subs WHERE endpoint = ?').run(endpoint);
-  else if (!res.ok) console.error(`Bildirim gönderilemedi (${res.status}): ${new URL(endpoint).origin}`);
+  else if (!res.ok) console.error(`Notification not delivered (${res.status}): ${new URL(endpoint).origin}`);
 }
 
 // Mesajın kaydedilmesini beklemez; bildirim hatası mesaj göndermeyi asla bozmaz.
 function pushToMembers(convoId, senderId) {
   const subs = db.prepare(`SELECT p.endpoint FROM push_subs p JOIN members m ON m.user_id = p.user_id
                            WHERE m.convo_id = ? AND p.user_id != ?`).all(convoId, senderId);
-  for (const { endpoint } of subs) pushOne(endpoint).catch((e) => console.error('Bildirim hatası:', e.message));
+  for (const { endpoint } of subs) pushOne(endpoint).catch((e) => console.error('Notification error:', e.message));
 }
 
 // ---- Yardımcılar
@@ -672,5 +672,5 @@ if (process.argv[2]) {
       if (e.status === 413) res.setHeader('Connection', 'close');
       sendJson(res, e.status || 500, { error: e instanceof HttpError ? e.message : 'serverError' });
     });
-  }).listen(PORT, HOST, () => console.log(`ATICOM çalışıyor: http://${HOST}:${PORT}`));
+  }).listen(PORT, HOST, () => console.log(`ATICOM running at http://${HOST}:${PORT}`));
 }

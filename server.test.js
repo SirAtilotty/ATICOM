@@ -33,7 +33,7 @@ async function call(url, { cookie, json, body, method, headers = {} } = {}) {
   return { status: res.status, cookie: set && set.split(';')[0], data: isJson ? await res.json() : Buffer.from(await res.arrayBuffer()), headers: res.headers };
 }
 
-const invite = () => /#davet=([0-9a-f]+)/.exec(cli('invite'))[1];
+const invite = () => /#invite=([0-9a-f]+)/.exec(cli('invite'))[1];
 const register = async (username) => {
   const r = await call('/api/register', { json: { invite: invite(), username, name: username, password: 'parola-1234' } });
   assert.equal(r.status, 200);
@@ -252,7 +252,7 @@ test('art arda hatalı giriş hesabı geçici kilitler', async () => {
 
 test('yönetici şifre sıfırlar ve üye çıkarır', async () => {
   const u = await register('giden');
-  const temp = /şifre: (\S+)/.exec(cli('reset', 'giden'))[1];
+  const temp = /password: (\S+)/.exec(cli('reset', 'giden'))[1];
   assert.equal((await call('/api/me', { cookie: u.cookie })).status, 401);
   const login = await call('/api/login', { json: { username: 'giden', password: temp } });
   assert.equal(login.status, 200);
@@ -365,7 +365,7 @@ test('bildirim yazısı kayıt adresindeki dili izler, uygulama ekrandaysa göst
 test('yedek veritabanını ve fotoğrafları içerir', async () => {
   const target = path.join(dir, 'yedekler');
   const out = cli('backup', target);
-  const made = /Yedek alındı: (.+)/.exec(out)[1].trim();
+  const made = /Backup saved: (.+)/.exec(out)[1].trim();
   assert.ok(fs.statSync(path.join(made, 'aticom.db')).size > 0);
   assert.ok(fs.readdirSync(path.join(made, 'uploads')).length >= 1);
 });
